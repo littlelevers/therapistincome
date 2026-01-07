@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Query Capital Therapist Income Planner</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Artifika&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --green:#80A079;
+      --gray-1:#D9D9D9;
+      --gray-2:#EFEFEF;
+      --text:#111;
+      --border:#cfcfcf;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      padding:24px;
+      font-family: Arial, Helvetica, sans-serif;
+      color:var(--text);
+      background:#fff;
+    }
+
+    .page{
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:16px;
+      flex-wrap:wrap;
+    }
+
+    .title{
+      font-family: "Artifika", serif;
+      font-size: 32px;
+      line-height:1.1;
+      margin:0;
+      text-align:center;
+    }
+
+    /* side-by-side; if squished, time-off drops below */
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    .sectionTitle{
+      background:var(--gray-1);
+      padding:10px 12px;
+      font-weight:700;
+      border:1px solid var(--border);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      border:1px solid var(--border);
+    }
+
+    th, td{
+      border:1px solid var(--border);
+      padding:8px 8px;
+      vertical-align:middle;
+      font-size:14px;
+    }
+
+    th{
+      background:var(--gray-2);
+      text-align:left;
+      font-weight:700;
+    }
+
+    td.labelCell{
+      background:var(--gray-2);
+      font-weight:700;
+    }
+
+    td.outCell{
+      background:var(--gray-2);
+      text-align:right;
+      font-variant-numeric: tabular-nums;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .input{
+      width:100%;
+      padding:8px 10px;
+      border:1px solid #7b7b7b;
+      outline:none;
+      border-radius:6px;
+      background: var(--green);
+      color:#0b0b0b;
+      font-weight:700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .input::placeholder{ color: rgba(0,0,0,0.55); font-weight:700; }
+
+    .rightCard{
+      border:1px solid var(--border);
+    }
+
+    .rightGrid{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+    }
+    .rightGrid td{
+      border:1px solid var(--border);
+      padding:10px 10px;
+      font-size:14px;
+    }
+    .rightGrid td.q{
+      background:var(--gray-2);
+      font-weight:700;
+    }
+    .rightGrid td.unit{
+      background:var(--gray-2);
+      width:110px;
+      text-align:center;
+      font-weight:700;
+    }
+
+    .rowActions{
+      display:flex;
+      justify-content:flex-end;
+      gap:6px;
+    }
+
+    button{
+      border:1px solid #1e1e1e;
+      background:#fff;
+      padding:9px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    button:hover{ background:#f6f6f6; }
+
+    .smallBtn{
+      padding:6px 10px;
+      border-radius:10px;
+      font-size:12px;
+    }
+
+    .deleteBtn{
+      background: var(--green);
+      border: 1px solid #3a4a36;
+    }
+    .deleteBtn:hover{ filter: brightness(0.97); }
+
+    .addRateWrap{
+      display:flex;
+      justify-content:flex-end;
+      padding:10px 0 0 0;
+    }
+
+    .strongOut{
+      font-weight: 800;
+    }
+
+    /* Totals label cell: allow full label and keep it right aligned */
+    .totLabel{
+      text-align: right !important;
+      white-space: normal !important;   /* allow wrap */
+      overflow: visible !important;
+      text-overflow: clip !important;
+      line-height: 1.2;
+    }
+
+    /* Make sure totals rows don't get ellipsized in any of the three cells */
+    .totRow td.outCell{
+      overflow: visible !important;
+      text-overflow: clip !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="header">
+      <h1 class="title">Query Capital Therapist Income Planner</h1>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: Expected Revenue -->
+      <div>
+        <div class="sectionTitle">Expected Revenue</div>
+
+        <table aria-label="Expected Revenue Table">
+          <thead>
+            <tr>
+              <th style="width:120px;">Pay Tier</th>
+              <th style="width:110px;">Rate</th>
+              <th style="width:95px;">Weekly</th>
+              <th style="width:95px;">Bi-Weekly</th>
+              <th style="width:95px;">Monthly</th>
+              <th style="width:150px;">Annual Total</th>
+              <th style="width:170px;">Average Sessions/Week</th>
+              <th style="width:110px;">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody id="ratesBody"></tbody>
+
+          <tbody>
+            <!-- Add Rate button directly under the rate rows (visually under Rate 5 when you have 5) -->
+            <tr id="addRateRow">
+              <td class="labelCell" colspan="8">
+                <div class="addRateWrap">
+                  <button id="addRateBtn" type="button">Add Rate</button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- TOTALS: label column immediately left of dollars, then sessions -->
+            <tr class="totRow">
+              <td class="labelCell" colspan="4"></td>
+              <td class="outCell totLabel">Total</td>
+              <td class="outCell" id="totalAnnual">$0.00</td>
+              <td class="outCell strongOut" id="totalAvgSessions">0.00</td>
+              <td class="labelCell"></td>
+            </tr>
+
+            <tr class="totRow">
+              <td class="labelCell" colspan="4"></td>
+              <td class="outCell totLabel strongOut">Adjusted Total net of cancelations and time off</td>
+              <td class="outCell strongOut" id="adjAnnual">$0.00</td>
+              <td class="outCell" id="adjAvgSessions">0.00</td>
+              <td class="labelCell"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- RIGHT: Time Off Adjustment -->
+      <div class="rightCard">
+        <div class="sectionTitle">Time Off Adjustment</div>
+
+        <table class="rightGrid" aria-label="Time Off Adjustment">
+          <tr>
+            <td class="q">How many sessions do you want to do per day?</td>
+            <td><input class="input" id="sessionsPerDay" type="number" step="1" min="0" /></td>
+            <td class="unit">Sessions</td>
+          </tr>
+          <tr>
+            <td class="q">How many days a week do you want to work?</td>
+            <td><input class="input" id="daysPerWeek" type="number" step="1" min="0" /></td>
+            <td class="unit">Days</td>
+          </tr>
+          <tr>
+            <td class="q">How many cancelations do you expect per week?</td>
+            <td><input class="input" id="cancelPerWeek" type="number" step="1" min="0" /></td>
+            <td class="unit">Cancelations</td>
+          </tr>
+          <tr>
+            <td class="q">How many weeks of vacation do you want to take?</td>
+            <td><input class="input" id="vacWeeks" type="number" step="1" min="0" /></td>
+            <td class="unit">Vacation Weeks</td>
+          </tr>
+          <tr>
+            <td class="q">We'll adjust your expected revenue down by this much</td>
+            <td class="outCell" id="adjustFactor">0.00%</td>
+            <td class="unit"></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const moneyFmt = new Intl.NumberFormat(undefined, {
+      style:"currency", currency:"USD", minimumFractionDigits:2, maximumFractionDigits:2
+    });
+    const numFmt2  = new Intl.NumberFormat(undefined, { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+    const clamp0 = (n) => (Number.isFinite(n) ? Math.max(0, n) : 0);
+    const toNum = (v) => {
+      const n = typeof v === "number" ? v : parseFloat(String(v ?? "").trim());
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    // Defaults from the Excel file green cells
+    let rates = [
+      { name:"Rate 1", rate:50,  weekly:null, biweekly:2,  monthly:7  },
+      { name:"Rate 2", rate:100, weekly:2,    biweekly:null, monthly:1  },
+      { name:"Rate 3", rate:125, weekly:4,    biweekly:1,    monthly:null },
+      { name:"Rate 4", rate:175, weekly:10,   biweekly:2,    monthly:null },
+    ];
+
+    const defaults = { sessionsPerDay: 5, daysPerWeek: 4, cancelPerWeek: 2, vacWeeks: 4 };
+
+    function annualTotal(r){
+      const weekly   = toNum(r.weekly);
+      const biweekly = toNum(r.biweekly);
+      const monthly  = toNum(r.monthly);
+      const rate     = toNum(r.rate);
+      return (monthly * 12 + biweekly * 26 + weekly * 52) * rate;
+    }
+
+    function avgSessionsPerWeek(r){
+      const weekly   = toNum(r.weekly);
+      const biweekly = toNum(r.biweekly);
+      const monthly  = toNum(r.monthly);
+      return (monthly * 12 / 52) + (biweekly / 2) + weekly;
+    }
+
+    function computeAdjustmentFactor(){
+      const sessionsPerDay = clamp0(toNum(document.getElementById("sessionsPerDay").value));
+      const daysPerWeek    = clamp0(toNum(document.getElementById("daysPerWeek").value));
+      const cancelPerWeek  = clamp0(toNum(document.getElementById("cancelPerWeek").value));
+      const vacWeeks       = clamp0(toNum(document.getElementById("vacWeeks").value));
+
+      const sessionsWeekNoCancel = sessionsPerDay * daysPerWeek;
+      const weeksYear = 52;
+      const sessionsYearNoVacNoCancel = weeksYear * sessionsWeekNoCancel;
+      if (sessionsYearNoVacNoCancel <= 0) return 0;
+
+      const weeksNetVac = weeksYear - vacWeeks;
+      const sessionsMissVac = vacWeeks * sessionsWeekNoCancel;
+      const sessionsCanceledYear = cancelPerWeek * weeksNetVac;
+      const sessionsNet = sessionsYearNoVacNoCancel - sessionsMissVac - sessionsCanceledYear;
+
+      const factor = sessionsNet / sessionsYearNoVacNoCancel;
+      return Number.isFinite(factor) ? Math.max(0, factor) : 0;
+    }
+
+    function makeInputCell(idx, field, value, placeholder){
+      const td = document.createElement("td");
+
+      const input = document.createElement("input");
+      input.className = "input";
+      input.type = "number";
+      input.step = "1";
+      input.min = "0";
+
+      input.value = (value === null || value === undefined || value === "") ? "" : value;
+      input.placeholder = String(placeholder);
+
+      input.addEventListener("input", () => {
+        rates[idx][field] = (input.value === "" ? null : toNum(input.value));
+        recalc();
+      });
+
+      td.appendChild(input);
+      return td;
+    }
+
+    function renderRates(){
+      const body = document.getElementById("ratesBody");
+      body.innerHTML = "";
+
+      rates.forEach((r, idx) => {
+        const tr = document.createElement("tr");
+
+        const tdName = document.createElement("td");
+        tdName.className = "labelCell";
+        tdName.textContent = r.name;
+        tr.appendChild(tdName);
+
+        tr.appendChild(makeInputCell(idx, "rate", r.rate, "0"));
+        tr.appendChild(makeInputCell(idx, "weekly", r.weekly, "0"));
+        tr.appendChild(makeInputCell(idx, "biweekly", r.biweekly, "0"));
+        tr.appendChild(makeInputCell(idx, "monthly", r.monthly, "0"));
+
+        const tdAnnual = document.createElement("td");
+        tdAnnual.className = "outCell";
+        tdAnnual.id = `annual_${idx}`;
+        tdAnnual.textContent = moneyFmt.format(annualTotal(r));
+        tr.appendChild(tdAnnual);
+
+        const tdAvg = document.createElement("td");
+        tdAvg.className = "outCell";
+        tdAvg.id = `avg_${idx}`;
+        tdAvg.textContent = numFmt2.format(avgSessionsPerWeek(r));
+        tr.appendChild(tdAvg);
+
+        const tdActions = document.createElement("td");
+        tdActions.className = "labelCell";
+        const wrap = document.createElement("div");
+        wrap.className = "rowActions";
+
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "smallBtn deleteBtn";
+        del.textContent = "Delete";
+        del.addEventListener("click", () => {
+          rates.splice(idx, 1);
+          rates = rates.map((x, i) => ({ ...x, name:`Rate ${i+1}` }));
+          renderRates();
+          recalc();
+        });
+
+        wrap.appendChild(del);
+        tdActions.appendChild(wrap);
+        tr.appendChild(tdActions);
+
+        body.appendChild(tr);
+      });
+    }
+
+    function recalc(){
+      rates.forEach((r, idx) => {
+        const a = annualTotal(r);
+        const s = avgSessionsPerWeek(r);
+        const aEl = document.getElementById(`annual_${idx}`);
+        const sEl = document.getElementById(`avg_${idx}`);
+        if (aEl) aEl.textContent = moneyFmt.format(a);
+        if (sEl) sEl.textContent = numFmt2.format(s);
+      });
+
+      const totalAnnual = rates.reduce((sum, r) => sum + annualTotal(r), 0);
+      const totalAvg    = rates.reduce((sum, r) => sum + avgSessionsPerWeek(r), 0);
+
+      document.getElementById("totalAnnual").textContent = moneyFmt.format(totalAnnual);
+      document.getElementById("totalAvgSessions").textContent = numFmt2.format(totalAvg);
+
+      const factor = computeAdjustmentFactor();
+      document.getElementById("adjustFactor").textContent = numFmt2.format(factor * 100) + "%";
+
+      document.getElementById("adjAnnual").textContent      = moneyFmt.format(totalAnnual * factor);
+      document.getElementById("adjAvgSessions").textContent = numFmt2.format(totalAvg * factor);
+    }
+
+    function init(){
+      document.getElementById("sessionsPerDay").value = defaults.sessionsPerDay;
+      document.getElementById("daysPerWeek").value    = defaults.daysPerWeek;
+      document.getElementById("cancelPerWeek").value  = defaults.cancelPerWeek;
+      document.getElementById("vacWeeks").value       = defaults.vacWeeks;
+
+      ["sessionsPerDay","daysPerWeek","cancelPerWeek","vacWeeks"].forEach(id => {
+        document.getElementById(id).addEventListener("input", recalc);
+      });
+
+      document.getElementById("addRateBtn").addEventListener("click", () => {
+        rates.push({
+          name: `Rate ${rates.length + 1}`,
+          rate: 0,
+          weekly: 0,
+          biweekly: 0,
+          monthly: 0
+        });
+        renderRates();
+        recalc();
+      });
+
+      renderRates();
+      recalc();
+    }
+
+    init();
+  </script>
+</body>
+</html>
+```
